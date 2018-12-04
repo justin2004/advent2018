@@ -1,6 +1,10 @@
 #!/usr/bin/sbcl --script
 
+; part 1
 (do_it (read_file_into_seq_of_strings "/home/justin/aoc_2018/day2/input/data"))
+
+; part2
+(part2 (read_file_into_seq_of_strings "/home/justin/aoc_2018/day2/input/data"))
 
 
 (defun read_file_into_seq_of_strings (filename)
@@ -17,6 +21,66 @@
 
               
 (setf f '("abcdef" "bababc" "abbcde" "abcccd" "aabcdd" "abcdee" "ababab"))
+(setf j '("abcde" "fghij" "klmno" "pqrst" "fguij" "axcye" "wvxyz"))
+
+;convert "abc" into a (1 #\a) (2 #\b) (3 #\c)
+((lambda (a b)  a) (map 'list #'identity "apple") (map 'list #'identity "apple"))
+(mapcar #'(lambda (a b) (char= a b))  (map 'list #'identity "apple") (map 'list #'identity "appoe"))
+
+
+(common_chars "apple" "appbe")
+
+(defun common_chars (str1 str2)
+  (let ((sofar  '()))
+  (mapcar #'(lambda (a b)
+              (if (char= a b)
+                  (setf sofar (append sofar (list a)))))
+          (map 'list #'identity str1) (map 'list #'identity str2))
+  (map 'string #'identity sofar)))
+
+j
+(mapcar #'(lambda (str) (common_chars (elt j 0) str)) j)
+(mapcar #'(lambda (str) (common_chars (elt j 1) str)) j)
+; ...
+
+(defun part2 (lis_of_strings)
+  (let ((target_length (- (length (car lis_of_strings)) 1))) ; assuming all strings are same length
+    (format t "target length is ~A~%" target_length)
+    (remove nil
+            (remove-duplicates (mapcar #'(lambda (str) (let ((len (length str)))
+                                                         (if (= len target_length)
+                                                             str)))
+                                       (common_chars_cross lis_of_strings))
+                               :test #'string=))))
+
+(part2 jjj)
+(length (remove-duplicates (common_chars_cross jjj)))
+
+
+(defun common_chars_cross (lis_of_strings)
+  (flatten
+    (mapcar #'(lambda (str_outer)
+                (mapcar #'(lambda (str_inner) 
+                            (common_chars str_outer str_inner))
+                        lis_of_strings))
+            lis_of_strings)))
+
+(defun flatten (lis)
+  (if (and (listp lis)
+           (not (null lis)))
+      (if (listp (car lis))
+          (append (car lis)         (flatten (cdr lis)))
+          (append (list (car lis))  (flatten (cdr lis))))
+      lis))
+          
+(setf a *)
+(flatten a)
+
+
+(defmacro one_per (lis)
+  `(mapcar 
+
+
 
 (map 'list #'identity "abcde") ; turn string to list of chars
 
@@ -72,3 +136,4 @@ ff
 
 
 
+(read_file_into_seq_of_strings "/home/justin/aoc_2018/day2/input/data")

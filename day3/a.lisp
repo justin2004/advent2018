@@ -42,8 +42,8 @@ tab
 
 ;(regex:scan-str (regex:compile-str "are\([a-z]*\)") "hello theare sir. this is a house.")
 
-(defun rect (left right top bottom)
-  (list left right top bottom))
+(defun rect (left right top bottom id)
+  (list left right top bottom id))
 (defun left (rect)
   (elt rect 0))
 (defun right (rect)

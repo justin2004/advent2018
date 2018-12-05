@@ -4,8 +4,9 @@
 ;A claim like #123 @ 3,2: 5x4
 ; means that claim ID 123 specifies a rectangle 3 inches from the left edge, 2 inches from the top edge, 5 inches wide, and 4 inches tall.
 
+; part 1
 (read_file "/home/justin/aoc_2018/day3/input/data.prep")
-(read_file "/home/justin/aoc_2018/day3/input/smalldata.prep")
+(setf alpha (read_file "/home/justin/aoc_2018/day3/input/data.prep"))
 (setf tab (make-hash-table :test 'equal))
 tab
 (maphash #'(lambda (k v) (format t "~A:~A~%" k v)) tab)
@@ -15,6 +16,20 @@ tab
   total)
 
 (mapcar #'(lambda (rect) (clah rect tab)) (read_file "/home/justin/aoc_2018/day3/input/data.prep"))
+
+(mapcar #'(lambda (rect) (clah_reject rect tab)) (read_file "/home/justin/aoc_2018/day3/input/smalldata.prep"))
+;;;;;;;;;;;;;;;;
+
+; part 2
+(remove nil (beta alpha tab))
+
+
+;;;;;;;;;;;;
+
+
+
+
+
 
 (defun read_file (filename)
   (with-open-file (f filename :direction :input)
@@ -37,6 +52,8 @@ tab
   (elt rect 2))
 (defun bottom (rect)
   (elt rect 3))
+(defun id (rect)
+  (elt rect 4))
 
 (setf a (list (rect 1 5 -1 -10) (rect 3 5 -3 -6)))
 (overlap? (car a) (cadr a))
@@ -123,13 +140,13 @@ lr (8,6)
 
     
 
-(defun blah (rect)
+(defun rect_to_ordered_pairs (rect)
   (mapcar #'(lambda (y)
               (mapcar #'(lambda (x) (list x y))
                       (alexandria:iota (- (right rect) (left rect)) :start (left rect))))
           (alexandria:iota (- (top rect) (bottom rect)) :start (bottom rect))))
 
-(mapcar #'(lambda (ordered_pair) (incf_cbn (gethash ordered_pair tab))) (flatten (blah (car a))))
+(mapcar #'(lambda (ordered_pair) (incf_cbn (gethash ordered_pair tab))) (flatten (rect_to_ordered_pairs (car a))))
 tab
 
 (clah (car a) tab)
@@ -139,13 +156,31 @@ tab
 (null u)
 (incf_cbn u)
 (defmacro incf_cbn (place)  ; a function would not work here. i needed incf_cbn to not eval place right away
-  "incf could be null"
+  "incf could be null" ; but treat null like 0
   `(if (null ,place)
        (setf ,place 1)
        (incf ,place)))
 
+(car alpha)
+(rect_to_ordered_pairs (car alpha))
+
+
+(defun beta (list_of_rects ht)
+  (mapcar #'(lambda (a_rect)
+              (if (reduce #'(lambda (a b) (and a b))
+                          (clah_reject a_rect ht))
+                  (id a_rect)))
+          list_of_rects))
+
+(defun clah_reject (rect ht)
+  "like clah but return false when one of the square units were already occupied"
+  (mapcar #'(lambda (ordered_pair) (if (= (gethash ordered_pair ht) 1)
+                                      t
+                                      nil))
+                                       (flatten (rect_to_ordered_pairs rect))))
+
 (defun clah (rect ht)
-  (mapcar #'(lambda (ordered_pair) (incf_cbn (gethash ordered_pair ht)))    (flatten (blah rect))))
+  (mapcar #'(lambda (ordered_pair) (incf_cbn (gethash ordered_pair ht)))    (flatten (rect_to_ordered_pairs rect))))
 
 (defun flatten (lis)
   (if (and (listp lis)

@@ -1,5 +1,31 @@
+(ql:quickload "alexandria")
+(ql:quickload "regex")
+(ql:system-apropos "regex")
 ;A claim like #123 @ 3,2: 5x4
 ; means that claim ID 123 specifies a rectangle 3 inches from the left edge, 2 inches from the top edge, 5 inches wide, and 4 inches tall.
+
+(read_file "/home/justin/aoc_2018/day3/input/data.prep")
+(read_file "/home/justin/aoc_2018/day3/input/smalldata.prep")
+(setf tab (make-hash-table :test 'equal))
+tab
+(maphash #'(lambda (k v) (format t "~A:~A~%" k v)) tab)
+
+(let ((total 0))
+  (maphash #'(lambda (k v) (if (not (= 1 v)) (incf total))) tab)
+  total)
+
+(mapcar #'(lambda (rect) (clah rect tab)) (read_file "/home/justin/aoc_2018/day3/input/data.prep"))
+
+(defun read_file (filename)
+  (with-open-file (f filename :direction :input)
+  (defun getlines(current_seq_of_lines)
+        (let ((line (read f nil 'done nil)))
+          (if (eq line 'done)
+              current_seq_of_lines
+              (getlines (append current_seq_of_lines (list line))))))
+  (getlines '())))
+
+;(regex:scan-str (regex:compile-str "are\([a-z]*\)") "hello theare sir. this is a house.")
 
 (defun rect (left right top bottom)
   (list left right top bottom))
@@ -79,3 +105,52 @@ lr (8,6)
 
 "How many square inches of fabric are within two or more claims?"
 
+(alexandria:iota 5 :start 1)
+
+(setf tab (make-hash-table :test 'equal))
+(setf (gethash '(1 3) a) 1)
+(setf (gethash '(3 3) a) 2)
+(gethash '(3 3) a)
+(maphash #'(lambda (k v) (format t "~A:~A~%" k v)) tab)
+
+(defun rect_to_horizontal_strips (rect ht)
+  (let ((rows (- (top rect) (bottom rect)))
+        (cols (- (right rect) (left rect))))
+    (mapcar #'(lambda (x_offset y_offset) 
+                (mapcar #'(lambda (x_offset) (setf (gethash (list (+ x_offset (left rect)) (+ y_offset (top rect))) ht)
+                                               (+ (gethash (list (+ x_offset (left rect)) (+ y_offset (top rect))) ht) 1))))))))
+                                               ; maybe use let so we dont have to recalc
+
+    
+
+(defun blah (rect)
+  (mapcar #'(lambda (y)
+              (mapcar #'(lambda (x) (list x y))
+                      (alexandria:iota (- (right rect) (left rect)) :start (left rect))))
+          (alexandria:iota (- (top rect) (bottom rect)) :start (bottom rect))))
+
+(mapcar #'(lambda (ordered_pair) (incf_cbn (gethash ordered_pair tab))) (flatten (blah (car a))))
+tab
+
+(clah (car a) tab)
+tab
+
+(setf u nil)
+(null u)
+(incf_cbn u)
+(defmacro incf_cbn (place)  ; a function would not work here. i needed incf_cbn to not eval place right away
+  "incf could be null"
+  `(if (null ,place)
+       (setf ,place 1)
+       (incf ,place)))
+
+(defun clah (rect ht)
+  (mapcar #'(lambda (ordered_pair) (incf_cbn (gethash ordered_pair ht)))    (flatten (blah rect))))
+
+(defun flatten (lis)
+  (if (and (listp lis)
+           (not (null lis)))
+      (if (listp (car lis))
+          (append (car lis)         (flatten (cdr lis)))
+          (append (list (car lis))  (flatten (cdr lis))))
+      lis))

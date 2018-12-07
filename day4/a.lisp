@@ -68,26 +68,38 @@ a
 (setf (gethash "33" ht) (append nil (list "id")))
 
 
-(remove nil (mapcar #'prune_and_pairup (pp a)))
+(flatten (remove nil (mapcar #'prune_and_pairup (pp a)))) ; a list of lists of triples
 (car (remove nil (mapcar #'prune_and_pairup (pp a))))
 (cdddr (elt (pp a) 44))
-(prune_and_pairup (elt (pp a) 44))
+(flatten (prune_and_pairup (elt (pp a) 44)))
+(prune_and_pairup (elt (pp a) 48))
+(flatten (remove nil (mapcar #'prune_and_pairup (pp a))))
+(append (list (list 1 2 3)) (list (list 5 5 )))
+
 ; turn 1613 07 13 45 67    into 2 lists     1613 07 13     1613 45 67    or return it as it came in  -- returns a list of results
 ; and trim out 1613
 (defun prune_and_pairup (lis)
-  ;(format t "entering with ~A~%" lis)
-  (cond 
-    ((= (length lis) 1) 
-     nil)
-    ((= (length lis) 3)
-     lis)
-    ((> (length lis) 3)
-     ; take first 2 and then...
-     (list (list (car lis) (cadr lis) (caddr lis)) (prune_and_pairup (append (list (car lis)) (cdddr lis)))))))
+  (defun pp_ (lis state)
+    (format t "entering with ~A~%" lis)
+    (format t "and state is ~A~%" state)
+    (cond 
+      ((= (length lis) 1) 
+       state)
+      ((= (length lis) 3)
+       (if (null state)
+           (list lis)
+           (append state (list lis))))
+      ((> (length lis) 3)
+       (if (null state)
+           (pp_ (append (list (car lis)) (cdddr lis)) (list (list (car lis) (cadr lis) (caddr lis))))
+           ; take first 2 and then...
+           (pp_ (append (list (car lis)) (cdddr lis)) (append state (list (list (car lis) (cadr lis) (caddr lis)))))))))
+  (pp_ lis '()))
+
 
 
 (length (pp a))
-(remove nil (remove-if #'(lambda (lis) (or (= (length lis) 1) (> (length lis) 3))) (pp a)))
+(remove nil (remove-if #'(lambda (lis) (or (= (length lis) 1) (> (length lis) 3))) (pp a))) ; a list of lists of triples
 
 (setf ht (make-hash-table))
 ht
@@ -99,8 +111,8 @@ ht
                 ((= i (parse-integer (caddr lis))) 'done)
                 (let ((current_lis (gethash i ht)))
                   (setf (gethash i ht) (append current_lis (list (car lis)))))))
-        (remove nil (remove-if #'(lambda (lis) (or (= (length lis) 1) (> (length lis) 3))) (pp a))))
-
+        (flatten (remove nil (mapcar #'prune_and_pairup (pp a)))))
+        (remove nil (remove-if #'(lambda (lis) (or (= (length lis) 1) (> (length lis) 3))) (pp a)))  
   
         
 ; i gave in and did this iteratively
@@ -142,3 +154,12 @@ a
   (if 
 
 (logruns '(a s b))
+
+
+(defun flatten (lis)
+  (if (and (listp lis)
+           (not (null lis)))
+      (if (listp (car lis))
+          (append (car lis)         (flatten (cdr lis)))
+          (append (list (car lis))  (flatten (cdr lis))))
+      lis))

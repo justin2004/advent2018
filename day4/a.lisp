@@ -105,6 +105,33 @@ a
 ht
 (maphash #'(lambda (k v) (format t "~A:~A~%" k v)) ht)
 
+(maphash #'(lambda (k v)
+             (format t "minute ~A:~A~%" k (count "131" v :test #'string=)))
+         ht)
+
+(gethash 13 ht)
+
+(count (parse-integer "131") (list 44 55 131 9848 55))
+
+all_ids
+
+(mapcar #'(lambda (id) (list id (id_to_minutes id))) all_ids)
+(sort (mapcar #'(lambda (id) (list id (id_to_minutes id))) all_ids) #'(lambda (lis1 lis2) (< (cadr lis1) (cadr lis2))))
+; guard 131 min 36
+
+(defun id_to_minutes (id) ; id is a string
+  (let ((sum 0))
+    (maphash #'(lambda (k v)
+                 (setf sum (+ sum (count id v :test #'string=))))
+             ht)
+    sum))
+
+(gethash 58 ht)
+
+(setf all_ids (remove nil (remove-duplicates (mapcar #'(lambda (lis) (car lis))  (pp a)) :test #'string=)))
+
+
+
 ; load the hashtable
 (mapcar #'(lambda (lis)
             (do ((i (parse-integer (cadr lis)) (+ 1 i)))

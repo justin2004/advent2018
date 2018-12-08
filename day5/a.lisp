@@ -2,33 +2,25 @@
 
 
 (length polymer)
-(mapcar #'(lambda (x) (coerce x 'character)) "hello")
-(coerce "hello" 'character)
-(map 'list #'identity "aBbcc")
-(reduce #'+ (list 1 2 3))
-(reduce #'react (map 'list #'identity "CCBbccc"))
 (reduce #'react (map 'list #'identity "dabAcCaCBAcCcaDA"))
+; part 1
 (length (reduce #'react (map 'list #'identity polymer)))
-(+ (list 1 2) 5)
 
-(length polymer)
-
-(listp 2)
 
 (react #\b #\A)
 (react (list #\b #\a) #\A)
-(reverse (cdr (reverse (list 1 2 3))))
 
-(defun react (a b) ; TODO use let
+(defun react (a b) 
   (if (listp a)
       (if (null a)
           b
-          (if (and (char= (char-upcase (car (last a))) (char-upcase b))
-                   (not (eq (upper-case-p (car (last a))) (upper-case-p b))))
+          (if (destroy_conditions_met? (car (last a)) b)
               (reverse (cdr (reverse a)))
               (append a (list b))))
-          (if (and (char= (char-upcase a) (char-upcase b))
-                   (not (eq (upper-case-p a) (upper-case-p b))))
+          (if (destroy_conditions_met? a b)
               nil
               (list a b))))
 
+(defun destroy_conditions_met? (one two)
+  (and (char= (char-upcase one) (char-upcase two))
+       (not (eq (upper-case-p one) (upper-case-p two)))))

@@ -111,9 +111,38 @@ ht
 
 (gethash 13 ht)
 
-(count (parse-integer "131") (list 44 55 131 9848 55))
+(sort (per_minute_sum (list 44 55 131 9848 55)) #'(lambda (a b) (< (cadr a) (cadr b))))
+
+(* 49 2389)
+; part2
+; minute 49 guard 2389
+(sort  
+(let ((lis '()))
+(maphash #'(lambda (k v)
+             (setf lis (append lis (list (list k (last (sort (per_minute_sum v) #'(lambda (a b) (< (cadr a) (cadr b))))))))))
+         ht)
+lis)
+#'(lambda (a b) (< (car (cdaadr a)) (car (cdaadr b)))))
+justin
+(car (cdaadr '(14 (("131" 11)))))
+
+;(format t "~A:~A~%" k (sort (per_minute_sum v) #'(lambda (a b) (< (cadr a) (cadr b))))))
+;(format t "~A:~A~%" k (last (sort (per_minute_sum v) #'(lambda (a b) (< (cadr a) (cadr b)))))))
+
+
+
+(defun per_minute_sum (minute_lis)
+  (let ((ht (make-hash-table  :test #'equal)))
+    (mapcar #'(lambda (id) (list id (incf_cbn (gethash id ht)))) minute_lis)))
+
 
 all_ids
+
+(defmacro incf_cbn (place)  ; a function would not work here. i needed incf_cbn to not eval place right away
+  "incf could be null" ; but treat null like 0
+  `(if (null ,place)
+       (setf ,place 1)
+       (incf ,place)))
 
 (mapcar #'(lambda (id) (list id (id_to_minutes id))) all_ids)
 (sort (mapcar #'(lambda (id) (list id (id_to_minutes id))) all_ids) #'(lambda (lis1 lis2) (< (cadr lis1) (cadr lis2))))

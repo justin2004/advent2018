@@ -42,10 +42,27 @@
                    :y
                    (/ (reduce #'+ yes) (length yes)))))
 
+(setf ht (make-hash-table :test #'equal))
+ht
+(maphash #'(lambda (k v) (format t "~A:~A~%" k v)) ht)
+(mapcar #'(lambda (op) (setf (gethash op ht) nil)) (bounding_rect_opairs (list a b)))
+;ht is loaded
 
-(bounding_rect (list a b))
+(beta ht a)
 
-(defun bounding_rect (lis) ; lis of points
+(defun beta (ht point) ; ht contains   k: ordered pair   v: nearest prime ordered pair
+  (maphash #'(lambda (k v) 
+               (format t "dist between point and this op in ht ~A~%" 
+               (manhattan_distance (make-instance 'mypoint :x (car k) :y (cadr k)) point)))
+           ht))
+
+(mapcar #'(lambda (op)
+            (manhattan_distance
+              (make-instance 'mypoint :x (car op) :y (cadr op))
+              a))
+        (bounding_rect_opairs (list a b)))
+
+(defun bounding_rect_opairs (lis) ; lis of points
 "returns all the order pairs in the bounding rectangle for the lis of points "
   (flatten
     (rect_to_ordered_pairs
@@ -54,7 +71,6 @@
             (+ (cadr (max_x_y lis)) 1)
             (cadr    (min_x_y lis))
             nil)))) ; not using id
-
 
            
 (max_x_y (list a b))
@@ -75,6 +91,7 @@
       (min_lis yes)))) 
 
 (defun manhattan_distance (a b) ;mypoints
+  "a and b are of type mypoint"
   (+
     (abs (- (x a) (x b)))
     (abs (- (y a) (y b)))))

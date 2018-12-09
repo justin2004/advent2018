@@ -1,5 +1,16 @@
 ; TODO next day i must grow the functions from the bottom and don't let different representations stick around 
 
+(mypoint_equal? (make-instance 'mypoint :x 1 :y 1)
+       (make-instance 'mypoint :x 1 :y 1))
+
+(defun flatten (lis)
+  (if (and (listp lis)
+           (not (null lis)))
+      (if (listp (car lis))
+          (append (car lis)         (flatten (cdr lis)))
+          (append (list (car lis))  (flatten (cdr lis))))
+      lis))
+
 ; test set
 (setf prime_points
       (list
@@ -10,14 +21,6 @@
         (make-instance 'mypoint :x 5 :y -5)
         (make-instance 'mypoint :x 8 :y -9)))
 
-(setf prime_points (list
-                     (make-instance 'mypoint :x 192 :y -212)
-                     (make-instance 'mypoint :x 294 :y -73)
-                     (make-instance 'mypoint :x 153 :y -248)
-                     (make-instance 'mypoint :x 153 :y -322)
-                     (make-instance 'mypoint :x 225 :y -99)
-                     (make-instance 'mypoint :x 237 :y -331)
-                     (make-instance 'mypoint :x 279 :y -208)))
 
 (setf prime_points (list
                      (make-instance 'mypoint :x 192 :y -212)
@@ -88,7 +91,11 @@
             (list total prime_point)))
         prime_points))
 
+; and finally do this!
 (sort melody #'< :key #'car)
+
+
+; remove prime points that are closest to a point on the bounding rectangle
 
 
 
@@ -206,16 +213,72 @@ ht
               a))
         (bounding_rect_opairs (list a b)))
 
+
+
+
 (defun bounding_rect_opairs (lis) ; lis of points
 "returns all the order pairs in the bounding rectangle for the lis of points "
   (flatten
-    (rect_to_ordered_pairs
-      (rect (car (min_x_y lis))
-            (+ (car  (max_x_y lis)) 1)
-            (+ (cadr (max_x_y lis)) 1)
-            (cadr    (min_x_y lis))
-            nil)))) ; not using id
+    (rect_to_ordered_pairs (bounding_rect lis)))) ; not using id
 
+(maphash #'(lambda (k v)
+             (if (point_on_rect? k (bounding_rect prime_points))
+                 (format t "hit for ~A~%" k))
+                 (format t "not hit for ~A~%" k) 
+             )
+         ht)
+
+; remove from prime_points disqualified points -because they go to infinity-
+(let ((tmp_prime_points prime_points))
+  (maphash #'(lambda (k v)
+               (if (point_on_rect? k (bounding_rect prime_points))
+                   ; assuming v is already sorted.
+                   ; now remove first point in the v list from consideration because
+                   ; it might go to inifinity
+                   (progn
+                     (format t "found pt on bounding rect : ~A~%" k)
+                     (if (not (null v))
+                         (setf tmp_prime_points (remove (cadar v) tmp_prime_points :test #'mypoint_equal?))))  ; closet prime point to the op k
+                   (format t "found pt not on bounding rect : ~A~%" k)
+                   ))
+           ht)
+  tmp_prime_points)
+
+; now set prime_points to what the above form evaulated to
+(setf prime_points *)
+
+(defun point_on_rect? (op rect) ; pt is an ordered pair      rect is rect
+  (if
+     (or
+       (and
+         (= (left rect) (car op))
+         (<= (cadr op) (top rect))
+         (>= (cadr op) (bottom rect)))
+
+       (and
+         (= (right rect) (car op))
+         (<= (cadr op) (top rect))
+         (>= (cadr op) (bottom rect)))
+
+       (and
+         (= (bottom rect) (cadr op))
+         (<= (car op) (right rect))
+         (>= (car op) (left rect)))    
+
+       (and
+         (= (top rect) (cadr op))
+         (<= (car op) (right rect))
+         (>= (car op) (left rect))))
+     t))
+
+(bounding_rect prime_points)
+
+(defun bounding_rect (lis) ; lis of points
+    (rect (car (min_x_y lis))
+          (+ (car  (max_x_y lis)) 1)
+          (+ (cadr (max_x_y lis)) 1)
+          (cadr    (min_x_y lis))
+          nil))
            
 (max_x_y (list a b))
 (min_x_y (list a b))
@@ -264,206 +327,26 @@ ht
   (elt rect 4))
 
 
+(rect_to_ordered_pairs (bounding_rect prime_points))
 
 (defun rect_to_ordered_pairs (rect)
   (mapcar #'(lambda (y)
               (mapcar #'(lambda (x) (list x y))
-                      (alexandria:iota (- (right rect) (left rect)) :start (left rect))))
-          (alexandria:iota (- (top rect) (bottom rect)) :start (bottom rect))))
+                      (alexandria:iota (+ (- (right rect) (left rect)) 1) :start (left rect))))
+          (alexandria:iota (+ (- (top rect) (bottom rect)) 1) :start (bottom rect))))
 
 
 
 
 
-
-; ---------------------
 
 
 (ql:quickload "alexandria")
-(ql:quickload "regex")
-(ql:system-apropos "regex")
-;A claim like #123 @ 3,2: 5x4
-; means that claim ID 123 specifies a rectangle 3 inches from the left edge, 2 inches from the top edge, 5 inches wide, and 4 inches tall.
-
-; part 1
-(read_file "/home/justin/aoc_2018/day3/input/data.prep")
-(setf alpha (read_file "/home/justin/aoc_2018/day3/input/data.prep"))
-(setf tab (make-hash-table :test 'equal))
-tab
-(maphash #'(lambda (k v) (format t "~A:~A~%" k v)) tab)
-
-(let ((total 0))
-  (maphash #'(lambda (k v) (if (not (= 1 v)) (incf total))) tab)
-  total)
-
-(mapcar #'(lambda (rect) (clah rect tab)) (read_file "/home/justin/aoc_2018/day3/input/data.prep"))
-
-(mapcar #'(lambda (rect) (clah_reject rect tab)) (read_file "/home/justin/aoc_2018/day3/input/smalldata.prep"))
-;;;;;;;;;;;;;;;;
-
-; part 2
-(remove nil (beta alpha tab))
-
-
-;;;;;;;;;;;;
 
 
 
 
 
 
-(defun read_file (filename)
-  (with-open-file (f filename :direction :input)
-  (defun getlines(current_seq_of_lines)
-        (let ((line (read f nil 'done nil)))
-          (if (eq line 'done)
-              current_seq_of_lines
-              (getlines (append current_seq_of_lines (list line))))))
-  (getlines '())))
-
-;(regex:scan-str (regex:compile-str "are\([a-z]*\)") "hello theare sir. this is a house.")
-
-(defun rect (left right top bottom id)
-  (list left right top bottom id))
-(defun left (rect)
-  (elt rect 0))
-(defun right (rect)
-  (elt rect 1))
-(defun top (rect)
-  (elt rect 2))
-(defun bottom (rect)
-  (elt rect 3))
-(defun id (rect)
-  (elt rect 4))
 
 
-
-;          -------------------                        rect1
-; ------                                              rect2
-;        -------
-;                   -----
-;     ----------------------------
-;                           -----
-;                                  -----
-
-; if rect2.right >= rect1.left
-;   & rect2.left <=rect1.right
-
-(defun overlap? (rect1 rect2)
-  (if (and 
-        (and (>= (right rect2) (left rect1))
-             (<= (left rect2) (right rect1)))
-        (and (>= (top rect2) (bottom rect1))
-             (<= (bottom rect2) (top rect1))))
-      t
-      nil))
-(defun horizontal_overlap (rect1 rect2)
-  (cond
-    ((< (left rect2) (left rect1))  
-     (- (right rect2) (left rect1)))
-    ((> (right rect2) (right rect1))
-     (- (right rect1) ) (left rect2))
-    (t
-     (min
-       (abs (- (right rect2) (left rect2)))
-       (abs (- (right rect1) (left rect1)))))))
-
-(defun vertical_overlap (rect1 rect2) ; left -> bottom 
-  (cond                               ; right -> top
-    ((< (bottom rect2) (bottom rect1))  
-     (- (top rect2) (bottom rect1)))
-    ((> (top rect2) (top rect1))
-     (- (top rect1) ) (bottom rect2))
-    (t
-     (min
-       (abs (- (top rect2) (bottom rect2)))
-       (abs (- (top rect1) (bottom rect1)))))))
-
-(right (rect :left 44))
-
-in (x,y)
-ul (3,2)
-ur (8,2)
-ll (3,6)
-lr (8,6)
-
-
-"#1 @ 1,3: 4x4"
-"#2 @ 3,1: 4x4"
-"#3 @ 5,5: 2x2"
-
-"How many square inches of fabric are within two or more claims?"
-
-(alexandria:iota 5 :start 1)
-
-(setf tab (make-hash-table :test 'equal))
-(setf (gethash '(1 3) a) 1)
-(setf (gethash '(3 3) a) 2)
-(gethash '(3 3) a)
-(maphash #'(lambda (k v) (format t "~A:~A~%" k v)) tab)
-
-(defun rect_to_horizontal_strips (rect ht)
-  (let ((rows (- (top rect) (bottom rect)))
-        (cols (- (right rect) (left rect))))
-    (mapcar #'(lambda (x_offset y_offset) 
-                (mapcar #'(lambda (x_offset) (setf (gethash (list (+ x_offset (left rect)) (+ y_offset (top rect))) ht)
-                                               (+ (gethash (list (+ x_offset (left rect)) (+ y_offset (top rect))) ht) 1))))))))
-                                               ; maybe use let so we dont have to recalc
-
-    
-
-(defun rect_to_ordered_pairs (rect)
-  (mapcar #'(lambda (y)
-              (mapcar #'(lambda (x) (list x y))
-                      (alexandria:iota (- (right rect) (left rect)) :start (left rect))))
-          (alexandria:iota (- (top rect) (bottom rect)) :start (bottom rect))))
-
-(mapcar #'(lambda (ordered_pair) (incf_cbn (gethash ordered_pair tab))) (flatten (rect_to_ordered_pairs (car a))))
-tab
-
-(clah (car a) tab)
-tab
-
-(setf u nil)
-(null u)
-(incf_cbn u)
-(defmacro incf_cbn (place)  ; a function would not work here. i needed incf_cbn to not eval place right away
-  "incf could be null" ; but treat null like 0
-  `(if (null ,place)
-       (setf ,place 1)
-       (incf ,place)))
-
-(car alpha)
-(rect_to_ordered_pairs (car alpha))
-
-
-(defun beta (list_of_rects ht)
-  (mapcar #'(lambda (a_rect)
-              (if (reduce #'(lambda (a b) (and a b))
-                          (clah_reject a_rect ht))
-                  (id a_rect)))
-          list_of_rects))
-
-(defun clah_reject (rect ht)
-  "like clah but return false when one of the square units were already occupied"
-  (mapcar #'(lambda (ordered_pair) (if (= (gethash ordered_pair ht) 1)
-                                      t
-                                      nil))
-                                       (flatten (rect_to_ordered_pairs rect))))
-
-(defun clah (rect ht)
-  (mapcar #'(lambda (ordered_pair) (incf_cbn (gethash ordered_pair ht)))    (flatten (rect_to_ordered_pairs rect))))
-
-(defun flatten (lis)
-  (if (and (listp lis)
-           (not (null lis)))
-      (if (listp (car lis))
-          (append (car lis)         (flatten (cdr lis)))
-          (append (list (car lis))  (flatten (cdr lis))))
-      lis))
-
-
-
-
-(mypoint_equal? (make-instance 'mypoint :x 1 :y 2)
-       (make-instance 'mypoint :x 1 :y 1))

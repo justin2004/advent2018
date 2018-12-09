@@ -1,4 +1,19 @@
-(maphash 
+; TODO next day i must grow the functions from the bottom and don't let different representations stick around 
+
+(defmethod print-object ((p mypoint) stream)
+  (format stream "<x:~A y:~A>" (x p) (y p)))
+
+; for each prime point count each in the ht
+(mapcar #'(lambda (prime_point)
+            (let ((total 0))
+            (maphash #'(lambda (k v) 
+                         (if (not (null v))
+                           (if (mypoint_equal? (cadar v) prime_point)
+                               (incf total))))
+                     ht)
+            (list total prime_point)))
+        (list a b))
+
 
 
 (find 55 (list 1 3 7 5 4))
@@ -33,6 +48,11 @@
 (defclass mypoint ()
   ((x :accessor x :initarg :x)
    (y :accessor y :initarg :y)))
+(defmethod mypoint_equal? ((a mypoint) (b mypoint))
+  (and
+    (= (x a) (x b))
+    (= (y a) (y b))))
+    
 (setf a (make-instance 'mypoint))
 (setf b (make-instance 'mypoint))
 (make-instance 'mypoint :x 4)
@@ -361,3 +381,9 @@ tab
           (append (car lis)         (flatten (cdr lis)))
           (append (list (car lis))  (flatten (cdr lis))))
       lis))
+
+
+
+
+(mypoint_equal? (make-instance 'mypoint :x 1 :y 2)
+       (make-instance 'mypoint :x 1 :y 1))

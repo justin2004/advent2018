@@ -1,5 +1,60 @@
 ; TODO next day i must grow the functions from the bottom and don't let different representations stick around 
 
+
+(setf prime_points (list
+                     (make-instance 'mypoint :x 192 :y -212)
+                     (make-instance 'mypoint :x 294 :y -73)
+                     (make-instance 'mypoint :x 153 :y -248)
+                     (make-instance 'mypoint :x 238 :y -54)
+                     (make-instance 'mypoint :x 354 :y -207)
+                     (make-instance 'mypoint :x 269 :y -256)
+                     (make-instance 'mypoint :x 155 :y -329)
+                     (make-instance 'mypoint :x 132 :y -308)
+                     (make-instance 'mypoint :x 211 :y -173)
+                     (make-instance 'mypoint :x 261 :y -241)
+                     (make-instance 'mypoint :x 300 :y -218)
+                     (make-instance 'mypoint :x 143 :y -43)
+                     (make-instance 'mypoint :x 226 :y -348)
+                     (make-instance 'mypoint :x 148 :y -349)
+                     (make-instance 'mypoint :x 114 :y -78)
+                     (make-instance 'mypoint :x 77 :y -327)
+                     (make-instance 'mypoint :x 140 :y -327)
+                     (make-instance 'mypoint :x 202 :y -346)
+                     (make-instance 'mypoint :x 174 :y -115)
+                     (make-instance 'mypoint :x 86 :y -198)
+                     (make-instance 'mypoint :x 132 :y -152)
+                     (make-instance 'mypoint :x 167 :y -184)
+                     (make-instance 'mypoint :x 146 :y -259)
+                     (make-instance 'mypoint :x 277 :y -288)
+                     (make-instance 'mypoint :x 330 :y -199)
+                     (make-instance 'mypoint :x 98 :y -332)
+                     (make-instance 'mypoint :x 290 :y -186)
+                     (make-instance 'mypoint :x 322 :y -120)
+                     (make-instance 'mypoint :x 295 :y -355)
+                     (make-instance 'mypoint :x 346 :y -260)
+                     (make-instance 'mypoint :x 305 :y -190)
+                     (make-instance 'mypoint :x 294 :y -82)
+                     (make-instance 'mypoint :x 156 :y -159)
+                     (make-instance 'mypoint :x 114 :y -263)
+                     (make-instance 'mypoint :x 340 :y -220)
+                     (make-instance 'mypoint :x 353 :y -207)
+                     (make-instance 'mypoint :x 220 :y -219)
+                     (make-instance 'mypoint :x 152 :y -122)
+                     (make-instance 'mypoint :x 223 :y -319)
+                     (make-instance 'mypoint :x 236 :y -243)
+                     (make-instance 'mypoint :x 358 :y -348)
+                     (make-instance 'mypoint :x 174 :y -116)
+                     (make-instance 'mypoint :x 306 :y -74)
+                     (make-instance 'mypoint :x 70 :y -264)
+                     (make-instance 'mypoint :x 352 :y -351)
+                     (make-instance 'mypoint :x 194 :y -214)
+                     (make-instance 'mypoint :x 153 :y -322)
+                     (make-instance 'mypoint :x 225 :y -99)
+                     (make-instance 'mypoint :x 237 :y -331)
+                     (make-instance 'mypoint :x 279 :y -208)))
+
+
+
 (defmethod print-object ((p mypoint) stream)
   (format stream "<x:~A y:~A>" (x p) (y p)))
 
@@ -12,7 +67,7 @@
                                (incf total))))
                      ht)
             (list total prime_point)))
-        (list a b))
+        prime_points)
 
 
 
@@ -21,6 +76,7 @@
 (cancel_ties (list '(1 828282) '(2 8334) '(3 38438484) '(2 838383)))
 (cancel_ties (list '(1 828282) '(2 8334) '(3 38438484) '(6 838383)))
 
+; cancel ties in ht
 (maphash #'(lambda (k v)
              (let ((current_val (gethash k ht)))
                (setf (gethash k ht) (cancel_ties current_val))))
@@ -95,10 +151,11 @@
 (setf ht (make-hash-table :test #'equal))
 ht
 (maphash #'(lambda (k v) (format t "~A:~A~%" k v)) ht)
-(mapcar #'(lambda (op) (setf (gethash op ht) nil)) (bounding_rect_opairs (list a b)))
+(mapcar #'(lambda (op) (setf (gethash op ht) nil)) (bounding_rect_opairs prime_points))
 ;ht is loaded
 
-(beta ht a)
+;(beta ht a)
+
 
 ; for each of the regular points, loop thru the prime points, get the mdist btween them and sort and get the prime point with the lowest mdist
 (maphash #'(lambda (regular_op closest_prime_op)
@@ -108,7 +165,7 @@ ht
                                    (list
                                      (manhattan_distance prime_pt (make-instance 'mypoint :x (car regular_op) :y (cadr regular_op)))
                                      prime_pt))
-                               (list a b)) #'< :key #'car)))
+                               prime_points) #'< :key #'car)))
          ht)
 
 

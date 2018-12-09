@@ -1,5 +1,23 @@
 ; TODO next day i must grow the functions from the bottom and don't let different representations stick around 
 
+; test set
+(setf prime_points
+      (list
+        (make-instance 'mypoint :x 1 :y -1)
+        (make-instance 'mypoint :x 1 :y -6)
+        (make-instance 'mypoint :x 8 :y -3)
+        (make-instance 'mypoint :x 3 :y -4)
+        (make-instance 'mypoint :x 5 :y -5)
+        (make-instance 'mypoint :x 8 :y -9)))
+
+(setf prime_points (list
+                     (make-instance 'mypoint :x 192 :y -212)
+                     (make-instance 'mypoint :x 294 :y -73)
+                     (make-instance 'mypoint :x 153 :y -248)
+                     (make-instance 'mypoint :x 153 :y -322)
+                     (make-instance 'mypoint :x 225 :y -99)
+                     (make-instance 'mypoint :x 237 :y -331)
+                     (make-instance 'mypoint :x 279 :y -208)))
 
 (setf prime_points (list
                      (make-instance 'mypoint :x 192 :y -212)
@@ -59,6 +77,7 @@
   (format stream "<x:~A y:~A>" (x p) (y p)))
 
 ; for each prime point count each in the ht
+(setf melody
 (mapcar #'(lambda (prime_point)
             (let ((total 0))
             (maphash #'(lambda (k v) 
@@ -67,7 +86,9 @@
                                (incf total))))
                      ht)
             (list total prime_point)))
-        prime_points)
+        prime_points))
+
+(sort melody #'< :key #'car)
 
 
 
@@ -87,7 +108,7 @@
   (let ((lis_cp lis))
   (do ((i 0 (+ 1 i)))
       ((= i (length lis)) 'done)
-       (if (> (count (car (elt lis i)) lis :key #'car) 1)
+       (if (> (count (car (elt lis 0)) lis :key #'car) 1) ; only consider a tie if the best matches?
            (setf lis_cp nil)))
   lis_cp))
            
@@ -151,6 +172,8 @@
 (setf ht (make-hash-table :test #'equal))
 ht
 (maphash #'(lambda (k v) (format t "~A:~A~%" k v)) ht)
+
+; first
 (mapcar #'(lambda (op) (setf (gethash op ht) nil)) (bounding_rect_opairs prime_points))
 ;ht is loaded
 

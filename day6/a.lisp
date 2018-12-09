@@ -1,3 +1,35 @@
+(maphash 
+
+
+(find 55 (list 1 3 7 5 4))
+(remove 4 (list 1 2 3 4 5 6 4 ))
+(cancel_ties (list '(1 828282) '(2 8334) '(3 38438484) '(2 838383)))
+(cancel_ties (list '(1 828282) '(2 8334) '(3 38438484) '(6 838383)))
+
+(maphash #'(lambda (k v)
+             (let ((current_val (gethash k ht)))
+               (setf (gethash k ht) (cancel_ties current_val))))
+         ht)
+
+(defun cancel_ties (lis)
+  "deletes values with tied distances or returns lists untouched "
+  (let ((lis_cp lis))
+  (do ((i 0 (+ 1 i)))
+      ((= i (length lis)) 'done)
+       (if (> (count (car (elt lis i)) lis :key #'car) 1)
+           (setf lis_cp nil)))
+  lis_cp))
+           
+
+
+  
+  
+(histo (list '(1 828282) '(2 8334) '(3 38438484) '(2 838383)))
+(remove_equals (list '(1 828282) '(2 8334) '(3 38438484) '(2 838383)))
+(defun remove_equals (lis)
+  (count 2 lis :key #'(lambda (ele) (car ele))))
+
+
 (defclass mypoint ()
   ((x :accessor x :initarg :x)
    (y :accessor y :initarg :y)))
@@ -19,8 +51,6 @@
 (max_lis '(4 5 6))
 (max (list 4 5 6))
 
-(defmacro max_lis (lis)
-  `(max ,@(eval lis)))
 
 (defun max_lis (lis)
   (car (last (sort lis #'<))))
@@ -50,10 +80,24 @@ ht
 
 (beta ht a)
 
-(defun beta (ht point) ; ht contains   k: ordered pair   v: nearest prime ordered pair
+; for each of the regular points, loop thru the prime points, get the mdist btween them and sort and get the prime point with the lowest mdist
+(maphash #'(lambda (regular_op closest_prime_op)
+                     (setf (gethash regular_op ht)
+                     (sort 
+                       (mapcar #'(lambda (prime_pt)
+                                   (list
+                                     (manhattan_distance prime_pt (make-instance 'mypoint :x (car regular_op) :y (cadr regular_op)))
+                                     prime_pt))
+                               (list a b)) #'< :key #'car)))
+         ht)
+
+
+
+(defun beta (ht point) ; ht contains   k: ordered pair   v: nearest prime ordered pair        point: one of the prime points
   (maphash #'(lambda (k v) 
-               (format t "dist between point and this op in ht ~A~%" 
-               (manhattan_distance (make-instance 'mypoint :x (car k) :y (cadr k)) point)))
+               (format t "dist between point and this op ~A in ht ~A~%" 
+                       k 
+                       (manhattan_distance (make-instance 'mypoint :x (car k) :y (cadr k)) point)))
            ht))
 
 (mapcar #'(lambda (op)

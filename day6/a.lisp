@@ -4,19 +4,39 @@
 ; TODO next day i must grow the functions from the bottom and don't let different representations stick around 
 
 ;;;;;;;;;;; part 2  ;;;;;;;;;;;;;;;;;
-(maphash #'(lambda (k v) (format t "~A:~A~%" k v)) ht)
 
-(mapcar #'(lambda (op) (setf (gethash op ht) nil)) (bounding_rect_opairs prime_points))
+;(maphash #'(lambda (regular_op closest_prime_op)
+;                     (setf (gethash regular_op ht)
+;                     (sort 
+;                       (mapcar #'(lambda (prime_pt)
+;                                   (list
+;                                     (manhattan_distance prime_pt (make-instance 'mypoint :x (car regular_op) :y (cadr regular_op)))
+;                                     prime_pt))
+;                               prime_points) #'< :key #'car)))
+;         ht)
 
-(maphash #'(lambda (regular_op closest_prime_op)
-                     (setf (gethash regular_op ht)
-                     (sort 
-                       (mapcar #'(lambda (prime_pt)
-                                   (list
-                                     (manhattan_distance prime_pt (make-instance 'mypoint :x (car regular_op) :y (cadr regular_op)))
-                                     prime_pt))
-                               prime_points) #'< :key #'car)))
+; turn the v into total dist from all other prime points
+(maphash #'(lambda (k v)
+             (setf (gethash k ht)
+             (reduce #'+ v :key #'car)))
          ht)
+(reduce #'+ '((4 "djdj") (5 "dkdjd")) :key #'car)
+
+(setf cutoff 10000)
+; remove the points that have a total dist from all other prime points equal to or over cutoff
+(maphash #'(lambda (k v)
+             (if (<= cutoff v) ; needs to be removed
+                 (setf (gethash k ht) nil)))
+         ht)
+
+; sum the keys that have a non nul value
+(let ((total 0))
+  (maphash #'(lambda (k v)
+               (if (not (null v))
+                   (incf total)))
+           ht)
+  total)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -140,8 +160,6 @@
 (manhattan_distance a b)
 (max_lis '(4 5 6))
 (max (list 4 5 6))
-
-
 
 
 (max_lis (list 43 58 2))

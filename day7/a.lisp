@@ -145,11 +145,21 @@
     (remove node block_list :key #'blocker)))
 
 
+; pass_with_time -- needs to accept args: for each worker node-> in progress node and how much time is left on it
+;   find_unblocked
+;   sort alphabetically 
+;   pair nodes with free workers
+;   tick until a node is ready to execute -- which happens instantly --
+;   execute that/those nodes ^
+;   call pass_with_time with remaining
+(defun pass_with_time
+
 (pass (nodes_todo block_list) block_list)
 ; pass:
 ;   find_unblocked 
 ;   sort alphabetically
 ;   execute greatest ^
+;   call pass with remaining todolist
 (defun pass (todo_list block_list)
   (if (not (null todo_list))
   (multiple-value-bind (next_todo_list next_block_list)

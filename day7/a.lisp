@@ -1,5 +1,7 @@
 ; note -  i am trying to do with minimal side effects -- assignments -- 
 ;     but how valuable is that really? TODO
+;    it does slow me down because instead of just making an assignment and using it / moving it around later
+;    i try to hold state by...
 
 (load "/home/justin/aoc_2018/day6/funs.lisp") ; for min_lis
 (ql:quickload "alexandria")
@@ -219,18 +221,41 @@ block_list
 
 (min_lis (list 1  nil 5))
 (tick_workers workers)
+(setf workers (make-hash-table))  ; k worker_id       v list: the node it is currently working on and how much time is left
+(mapcar #'(lambda (worker_id) (setf (gethash worker_id workers) nil)) (alexandria:iota 5))
 (maphash #'(lambda (k v) (format t "~A:~A~%" k v)) workers)
 (get_time_left (gethash 4 workers))
+(attempt_to_pair (list 'A 'B 'H) workers)
 
 (defun tick_workers (workers)
   ; workers can finish simultaneously
   "tick until a worker is done and for each return the finished node how much time passed in a list"
   ; also update workers globally
   (let ((times_left '()))
-  (maphash #'(lambda (k v) 
-               (setf times_left (remove nil (append times_left (list (get_time_left v))))))
-           workers)
-  (min_lis times_left)))
+    (maphash #'(lambda (k v) 
+                 (setf times_left (remove nil (append times_left (list (get_time_left v))))))
+             workers)
+    (let ((time_ticked_here (min_lis times_left))
+          (nodes_ready '()))
+      (format t "time_ticked_here is ~A~%" time_ticked_here)
+      ; 
+      (maphash #'(lambda (k v) 
+                   (if (and (not (null v)) 
+                            (= (get_time_left v)  time_ticked_here))
+                       (progn
+                         ; then node k is ready to execute
+                         (setf nodes_ready (append nodes_ready (list (get_node v))))
+                         ; also free up that worker
+                         (setf (gethash k workers) nil))))
+               workers)
+      ; now deduct the time_ticked_here from all active workers   TODO maybe i could do this in the above maphash
+      (maphash #'(lambda (k v) 
+                   (if (not (null v))
+                       (setf (gethash k workers) (list (get_node v) (- (get_time_left v) time_ticked_here)))))
+               workers))))
+
+
+    
 
 
 

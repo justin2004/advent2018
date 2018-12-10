@@ -1,3 +1,8 @@
+; note -  i am trying to do with minimal side effects -- assignments -- 
+;     but how valuable is that really? TODO
+
+(load "/home/justin/aoc_2018/day6/funs.lisp") ; for min_lis
+(ql:quickload "alexandria")
 (setf block_list (list
 '(D T)
 '(T K)
@@ -145,14 +150,90 @@
     (remove node block_list :key #'blocker)))
 
 
+; initialize workers  -- i guess i am keeping the workers global
+(defun get_node (lis) 
+  (car lis))
+(defun get_time_left (lis)
+  (cadr lis))
+(setf workers (make-hash-table))  ; k worker_id       v list: the node it is currently working on and how much time is left
+(mapcar #'(lambda (worker_id) (setf (gethash worker_id workers) nil)) (alexandria:iota 5))
+(maphash #'(lambda (k v) (format t "~A:~A~%" k v)) workers)
+
+
+(defun get_free_worker (workers)
+  "returns an id of a free worker if one exists"
+  (let ((free_worker_id nil))
+  (maphash #'(lambda (k v)
+               (if (null v)
+                   (setf free_worker_id k))) ; TODO could break out now
+           workers)
+  free_worker_id))
+
+(get_time_cost 'A)
+(get_time_cost 'Z)
+
+(defun get_time_cost (node)
+  (+ 1
+  (abs
+    (-
+      (char-int (elt (symbol-name 'A)   0))
+      (char-int (elt (symbol-name node) 0))))))
+
+(attempt_to_pair (list 'A 'H) workers)
+
+(defun attempt_to_pair (nodes workers) ; nodes is a list of the nodes that can be paired and workers is the available workers
+  ; and return a list of the nodes that were paired 
+  (mapcar #'(lambda (node)
+              (let ((free_worker_id
+                      (get_free_worker workers)))
+                (if (not (null free_worker_id))
+                    ; do the pairing
+                    (progn
+                      (setf (gethash free_worker_id workers) (list node (get_time_cost node))) ; side effect
+                      node)))) ; but return this
+          nodes))
+
+block_list
+(pass_with_time (nodes_todo block_list) block_list '())
+
 ; pass_with_time -- needs to accept args: for each worker node-> in progress node and how much time is left on it
 ;   find_unblocked
 ;   sort alphabetically 
 ;   pair nodes with free workers
+;     pairing a node means the node is no longer in the todo_nodelist but it is still in the blocklist
 ;   tick until a node is ready to execute -- which happens instantly --
-;   execute that/those nodes ^
+;   execute that/those nodes ^   
 ;   call pass_with_time with remaining
-(defun pass_with_time
+(defun pass_with_time (todo_list block_list workers_state)
+  (if (not (null todo_list))
+
+      (let ((nodes_that_can_start_ticking
+                (sort (find_unblocked block_list todo_list)
+                      #'(lambda (a b) (string<  (symbol-name a) (symbol-name b))))))
+        (format t "could start ~A" nodes_that_can_start_ticking) ; execute sequence
+        ; do pairing
+        (let ((successfully_paired_nodes
+          (attempt_to_pair nodes_that_can_start_ticking workers))) ; TODO relying on global workers
+        nodes_that_can_start_ticking))))
+
+
+(min_lis (list 1  nil 5))
+(tick_workers workers)
+(maphash #'(lambda (k v) (format t "~A:~A~%" k v)) workers)
+(get_time_left (gethash 4 workers))
+
+(defun tick_workers (workers)
+  ; workers can finish simultaneously
+  "tick until a worker is done and for each return the finished node how much time passed in a list"
+  ; also update workers globally
+  (let ((times_left '()))
+  (maphash #'(lambda (k v) 
+               (setf times_left (remove nil (append times_left (list (get_time_left v))))))
+           workers)
+  (min_lis times_left)))
+
+
+
 
 (pass (nodes_todo block_list) block_list)
 ; pass:

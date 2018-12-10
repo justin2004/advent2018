@@ -3,6 +3,8 @@
 ;    it does slow me down because instead of just making an assignment and using it / moving it around later
 ;    i try to hold state by...
 
+; matching paren highlighting ... if you hit a paren with your cursor that is in a comment it is like an error trap :/
+
 (load "/home/justin/aoc_2018/day6/funs.lisp") ; for min_lis
 (ql:quickload "alexandria")
 (setf block_list (list
@@ -224,20 +226,21 @@ block_list
 (setf workers (make-hash-table))  ; k worker_id       v list: the node it is currently working on and how much time is left
 (mapcar #'(lambda (worker_id) (setf (gethash worker_id workers) nil)) (alexandria:iota 5))
 (maphash #'(lambda (k v) (format t "~A:~A~%" k v)) workers)
-(get_time_left (gethash 4 workers))
 (attempt_to_pair (list 'A 'B 'H) workers)
 
 (defun tick_workers (workers)
   ; workers can finish simultaneously
-  "tick until a worker is done and for each return the finished node how much time passed in a list"
+  "tick until a worker is done and return the finished nodes in a list and how much time passed"
   ; also update workers globally
-  (let ((times_left '()))
+  (let ((times_left  '())
+        (nodes_ready '())
+        (gtime_ticked_here 0))
     (maphash #'(lambda (k v) 
                  (setf times_left (remove nil (append times_left (list (get_time_left v))))))
              workers)
-    (let ((time_ticked_here (min_lis times_left))
-          (nodes_ready '()))
-      (format t "time_ticked_here is ~A~%" time_ticked_here)
+    (let ((time_ticked_here (min_lis times_left)))
+      (setf gtime_ticked_here time_ticked_here) ;  ek TODO 
+      ;(format t "time_ticked_here is ~A~%" time_ticked_here)
       ; 
       (maphash #'(lambda (k v) 
                    (if (and (not (null v)) 
@@ -252,7 +255,11 @@ block_list
       (maphash #'(lambda (k v) 
                    (if (not (null v))
                        (setf (gethash k workers) (list (get_node v) (- (get_time_left v) time_ticked_here)))))
-               workers))))
+               workers))
+    (values 
+      nodes_ready
+      gtime_ticked_here)
+    ))
 
 
     

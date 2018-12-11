@@ -5,6 +5,13 @@
 
 ; matching paren highlighting ... if you hit a paren with your cursor that is in a comment it is like an error trap :/
 
+; is there any problem with, just inside a defun, just opening a let and declaring a bunch of variables?
+
+; i am making this hard than it needs to be by not having a principle way of using lets, multiple-value-binds, etc.
+; i've got scopes willy nilly
+; i need to get to the bottom of that or else just use c or try something else
+
+
 (load "/home/justin/aoc_2018/day6/funs.lisp") ; for min_lis
 (ql:quickload "alexandria")
 (setf block_list (list
@@ -148,10 +155,18 @@
 (execute 'c (nodes_todo block_list) block_list)
 
 (defun execute (node todo_list block_list)
-  "execute node"
+  "execute node from todo_list and then remove node from block_list 
+   returns 2 values: new todolist and new blocklist"
+  ; though in pass_with_time node will already be removed from todo_list
   (values
     (remove node todo_list)
     (remove node block_list :key #'blocker)))
+
+(defun execute_part2 (node todo_list block_list)
+  "execute node from todo_list and then remove node from block_list 
+   returns 1 values:  new blocklist"
+  ; though in pass_with_time node will already be removed from todo_list
+  (remove node block_list :key #'blocker))
 
 
 ; initialize workers  -- i guess i am keeping the workers global
@@ -198,27 +213,56 @@
           nodes))
 
 block_list
-(pass_with_time (nodes_todo block_list) block_list '())
+(pass_with_time (nodes_todo block_list) block_list workers 0)
 
 ; pass_with_time -- needs to accept args: for each worker node-> in progress node and how much time is left on it
 ;   find_unblocked
 ;   sort alphabetically 
 ;   pair nodes with free workers
 ;     pairing a node means the node is no longer in the todo_nodelist but it is still in the blocklist
-;   tick until a node is ready to execute -- which happens instantly --
+;   tick until a node is ready to execute -- execution happens instantly --
 ;   execute that/those nodes ^   
 ;   call pass_with_time with remaining
-(defun pass_with_time (todo_list block_list workers_state)
+(defun pass_with_time (todo_list block_list workers_state time_passed_so_far)
+  (format t "~%staring pass_with_time - todo_list:~A, block_list:~A, time_passed_so_far:~A~%"
+          todo_list
+          block_list
+          time_passed_so_far)
+  ; worker state
+  (format t "worker state:~%")
+  (maphash #'(lambda (k v) (format t "~A:~A~%" k v)) workers)
   (if (not (null todo_list))
 
-      (let ((nodes_that_can_start_ticking
-                (sort (find_unblocked block_list todo_list)
-                      #'(lambda (a b) (string<  (symbol-name a) (symbol-name b))))))
+      ;get unblocked and sort them
+      (let ((next_block_list block_list) ; we'll just overwrite this as we go
+            (next_todo_list todo_list) ; start with a full list and then we will remove nodes once they are executed
+            (nodes_that_can_start_ticking
+              (sort (find_unblocked block_list todo_list)
+                    #'(lambda (a b) (string<  (symbol-name a) (symbol-name b))))))
         (format t "could start ~A" nodes_that_can_start_ticking) ; execute sequence
         ; do pairing
         (let ((successfully_paired_nodes
-          (attempt_to_pair nodes_that_can_start_ticking workers))) ; TODO relying on global workers
-        nodes_that_can_start_ticking))))
+                (attempt_to_pair nodes_that_can_start_ticking workers))) ; TODO relying on global workers
+          (format t "we paired ~A" successfully_paired_nodes)
+          ; so now remove the paired ones from the todo_nodelist
+          (mapcar #'(lambda (node)
+                      (setf next_todo_list (remove node next_todo_list)))
+                  successfully_paired_nodes)
+          (multiple-value-bind (finished_nodes time_passed)
+            ; bind call
+            (tick_workers workers)
+            ; body
+            (format t "time passed:~A, finished nodes:~A~%" time_passed finished_nodes)
+            (mapcar #'(lambda (node) ; returns new blocklist but we already set it inside
+                        (setf next_block_list
+                              (execute_part2 node next_todo_list next_block_list)))
+                    finished_nodes)
+            (format t "at the end next_block_list:~A~%next_todo_list:~A, time_passed:~A~%" next_block_list next_todo_list time_passed)
+            (pass_with_time next_todo_list next_block_list workers (+ time_passed_so_far time_passed))
+            )))))
+
+
+
 
 
 (min_lis (list 1  nil 5))

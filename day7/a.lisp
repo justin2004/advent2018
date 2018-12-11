@@ -192,7 +192,7 @@
 (get_time_cost 'Z)
 
 (defun get_time_cost (node)
-  (+ 1
+  (+ 1 60    ; add 60 now for the real thing
   (abs
     (-
       (char-int (elt (symbol-name 'A)   0))
@@ -214,6 +214,7 @@
 
 block_list
 (pass_with_time (nodes_todo block_list) block_list workers 0)
+; 214 was too low   ahh, i forgot to add the 60 seconds per
 
 ; pass_with_time -- needs to accept args: for each worker node-> in progress node and how much time is left on it
 ;   find_unblocked

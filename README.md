@@ -5,6 +5,7 @@
 ##### lessons learned
 
 - since syntax highlighting errors while in double quotes and behind ; i am putting less comments
+    - that is with stock slimv if your cursor hits a paren in a comment an error occurs and impedes cursor movement
 
 - a.lisp gets cluttered and not ordered well because i can jump around and evaulate forms
 

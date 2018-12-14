@@ -38,13 +38,124 @@
     metadata_nodes))
                   
 
+ ;;;;;;;;;;;;;;;;;;;
+; turn
+(list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2)
+;     ^   ^            ^   ^       
+;into
+((10 11 12) ((99) 2) 1 1 2)
+
+; parse node into tree -- 
+;   if not null then we have a header
+;   grab the first 2 fields 
+;   push the number of children on the stack 
+;   push the number of metadata entries on the stack
+;   macro --  list parse_node ... num children metadata0 ...metadataN
+;   call parse_node_ until number of children is 0
+;   then read the number of metadata nodes
+
+(defun totree (lis)
+  (if (null lis)
+      nil
+      (let ((num_child (car  lis))
+            (num_meta  (cadr lis)))
+        ;(append (list (totree (cdr lis)) (totree (cddr lis))) metadatahere)
+        (let ((last_call_returned (cddr lis))) ; cddr lis   is the start of the first child
+          (loop for x from 1 to num_child 
+                do
+                (progn
+                  (format t "calling totree on ~A~%" last_call_returned)
+                  (setf last_call_returned (totree last_call_returned))))
+          (format t "meta here is ~A~%"  (subseq last_call_returned 0 num_meta))
+          (subseq last_call_returned num_meta)))))
+
+  ; a child is just the full lis that starts with the correct header
+
+(totree testdata)
+
+
+      
+(defun parse_node_test (lis) ; just get metadata
+  (let ((metadata_nodes '()))
+    (defun parse_node_ (lis)
+      ; it returns just the remaining metadata
+      (if (null lis)
+          nil
+          ;do we have some children to process?
+          (let* ((num_child_nodes    (car  lis))
+                 (num_metadata_nodes (cadr lis))
+                 (lis_left (wrap_n #'parse_node_ (cddr lis) num_child_nodes)))
+
+                        (setf metadata_nodes (append metadata_nodes (list (subseq lis_left 0 num_metadata_nodes))))
+            (values
+            (subseq lis_left num_metadata_nodes) ;the lis that is left
+            
+
+            )))
+    (parse_node_ lis)
+    metadata_nodes))
+
+
+(parse_node_test testdata)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; part 2
+; If a node has no child nodes, its value is the sum of its metadata entries.
+; if it has children its value is the sum of the children pointed to by the metadata entries -- 1 refers to first child, etc.
+
+; parse_node_
+;   get num child, num metadata
+;   if child==0 sum metadata and   return it
+;   else sum the return val from for each valid metadata pointer call parse_node_ on
+
+(defun parse_into_tree (lis) ; just get metadata
+  (let ((metadata_nodes '()))
+    (defun parse_node_ (lis)
+      ; it returns just the remaining metadata
+      (if (null lis)
+          nil
+          ;do we have some children to process?
+          (let* ((num_child_nodes    (car  lis))
+                 (num_metadata_nodes (cadr lis))
+                 (lis_left '())
+                 (children_value_sum 0))
+                   
+                   (multiple-value-bind (left value)
+                     (wrap_n #'parse_node_ (cddr lis) num_child_nodes)
+                     (setf lis_left left)
+                     (setf children_value_sum value))
+
+            (mapcar #'(lambda (x)
+                        (setf metadata_nodes (append metadata_nodes (list x))))
+                    (subseq lis_left 0 num_metadata_nodes))
+
+            (values
+            (subseq lis_left num_metadata_nodes)
+            (if (= 0 num_child_nodes)
+                (progn
+                  (format t "sum at this level with no children ~A~%" (reduce #'+ (subseq lis_left 0 num_metadata_nodes)))
+                  (reduce #'+ (subseq lis_left 0 num_metadata_nodes))
+                )
+                (progn
+                  (format t "sum at this level with    children ~A~%" children_value_sum)
+                  children_value_sum)))
+                
+            )))
+    (parse_node_ lis)
+    metadata_nodes))
+
+
+(parse_into_tree testdata)
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
           
 
 (subseq (list 3 5 7 8) 0 2)
 (subseq (list 3 5 7 8) 3)
 
 ;part 1
-(reduce #'+ (parse_node data))
+(reduce #'+ (parse_node testdata))
 
 ; a function that calls itself on its output n times
 (fn (fn (fn (caddr lis))))   
@@ -77,3 +188,9 @@
 
 
 
+
+
+(loop for x from 0 to 4
+      do
+      (progn
+      (format t "x:~A~%" x)))

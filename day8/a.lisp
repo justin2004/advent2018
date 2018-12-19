@@ -557,9 +557,12 @@ result
 (subseq (list 1 2 3 4 5) 1)
 
 
+(defun totree (lis)
+  (multiple-value-bind (remain tree)
+    (bob lis)
+    tree))
 
 (defun bob (lis) ; return the remaining elements   and  the tree so far
-  (format t "entering with:~A~%" lis)
   (if (or (null lis)
           (null (car lis)))
       nil
@@ -581,25 +584,50 @@ result
                               (progn
                                 (setf remaining left)
                                 tree)))
-                      (progn
-                        (format t "here:~A~%" (subseq remaining 0 num_metadata_nodes))
-                        (subseq remaining 0 num_metadata_nodes))
+                      (subseq remaining 0 num_metadata_nodes)
                       ))
                   (whatremains
                     (subseq remaining num_metadata_nodes))) ; ahh, i want this to be evaluated after the loop body 
-                                                            ; so i need it down here
+              ; so i need it down here
               (values
                 whatremains
                 siblings))))))
             
+(length (list 1 2 3 4))
+(elt (list 1 2 3 4) 3)
+; no child nodes then the value is the sum the metadata
+; else the metdata is an index of the children values
+(defun get_value (lis)
+  (let ((index_of_children_upperbound (get_position_of_first_metadata lis)))
+    (if (= index_of_children_upperbound 0)
+        ; then we only have metdata data here
+        (reduce #'+ lis)
+        ;else we need to do the recursive thing
+        (reduce #'+
+        (mapcar #'(lambda (index)
+                    (if (>= (- index 1) index_of_children_upperbound)
+                        0
+                        (get_value (elt lis (- index 1)))))
+                (subseq lis (get_position_of_first_metadata lis)))))))
 
+(reduce #'+ (list 3 4 5))
+
+(defun get_position_of_first_metadata (lis)
+(position nil
+(mapcar #'(lambda (x) (listp x)) 
+lis)))
 
 (bob '(1 1 0 1 99 2 1 1 2))
 into  ((99) 2) 
 (bob '(0 1 99 2 1 1 2))
 ; 
+(get_position_of_first_metadata (list 123 3 4))
 (bob (list 0 1 1))      
 (bob (list 2 1 0 1 100 0 1 200 300))
 (bob (list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2))
+(get_position_of_first_metadata (totree (list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2)))
+(get_value (totree (list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2)))
+(get_value (totree data))
+(totree data)
 ;into
 ((10 11 12) ((99) 2) 1 1 2)

@@ -60,19 +60,21 @@
       (let ((num_child (car  lis))
             (num_meta  (cadr lis)))
         ;(append (list (totree (cdr lis)) (totree (cddr lis))) metadatahere)
-        (let ((last_call_returned (cddr lis))) ; cddr lis   is the start of the first child
+        (let ((last_call_returned (cddr lis)) ; cddr lis   is the start of the first child
+              (metadata_lists '()))
           (loop for x from 1 to num_child 
                 do
                 (progn
                   (format t "calling totree on ~A~%" last_call_returned)
-                  (setf last_call_returned (totree last_call_returned))))
+                  (setf last_call_returned (totree last_call_returned)))
+                (format t "meta here is ~A~%"  (subseq last_call_returned 0 num_meta)))
           (format t "meta here is ~A~%"  (subseq last_call_returned 0 num_meta))
           (subseq last_call_returned num_meta)))))
 
   ; a child is just the full lis that starts with the correct header
 
 (totree testdata)
-
+8
 
       
 (defun parse_node_test (lis) ; just get metadata
@@ -190,7 +192,414 @@
 
 
 
-(loop for x from 0 to 4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;clean slate
+
+(list 1 1 0 1 10 5)
+; turn
+(list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2)
+;     ^   ^            ^   ^       
+;into
+((10 11 12) ((99) 2) 1 1 2)
+
+; in order to do this i had to start building for simple cases -- eg 0 children then 1 children,etc. -- then see what the pattern was then capture the pattern
+; that is what i do in C but i didn't try it right away because maybe i thought, since i am using lisp, another neat way would present itself to me :/
+(defun apple (lis ) ; returns what is left -- behind metadata -- and the tree so far
+  (if (null lis)
+      nil
+      (let ((num_childs (car  lis))
+            (num_metada (cadr lis))
+            (left       (cddr lis))) ; what is left after the header
+        (cond
+
+          ((= num_childs 0)
+           (values
+             (subseq left num_metada)
+             (subseq left 0 num_metada)))
+
+          ((= num_childs 1)
+           (multiple-value-bind (left treesofar)
+             (apple left)
+             (values
+               (subseq left num_metada) ; skip any metadata
+               (cons treesofar (subseq left 0 num_metada)))))
+
+          ((= num_childs 2)
+           (multiple-value-bind (left treesofar)
+             ;exec
+             (multiple-value-bind (left treesofar)
+               (apple left)
+               (values
+                 (subseq left num_metada) ; skip any metadata
+                 (cons treesofar (subseq left 0 num_metada))))
+             ; body
+             (multiple-value-bind (left treesofar)
+               ;exec
+               (apple left)
+               ;body
+               (values
+               (subseq left num_metada)
+               (cons treesofar (subseq left 0 num_metada)))
+               )))))))
+             
+
+           
+               
+(apple testdata)
+(apple (list 1 1 1 1 0 1 88 10 5))  
+(apple (list 1 1 0 1 10 5))  
+into    ((10) 5)
+(apple (list 2 1 0 1 100 0 1 300 500))
+
+; apple
+;   calls apple
+
+
+
+
+
+
+
+(defun wrap_n_lisofargs (fn first_arg n) ; handle fn returning 2 vals
+  (defun wrap_n_ (n)
+    (if (= n 0)
+        first_arg
+          (funcall fn (wrap_n_ (- n 1)))))
+  (wrap_n_ n))
+
+(wrap_n_lisofargs #'- 1 4)
+
+
+
+
+(defun wrap_n_noargs (fn n)
+  (defun wrap_n_ (n)
+    (if (not (>= n 1))
+        nil
+        (if (= n 1)
+            (funcall fn )
+            (funcall fn (wrap_n_ (- n 1))))))
+  (wrap_n_ n))
+
+(wrap_n_noargs #'list 2)
+(list)
+
+
+(setf aaron (list 1 1 100 0 1 200))
+(owen)
+aaron
+
+(defun owen () ; returns the tree so far
+  (format t "entering owen and aaron is ~A~%" aaron)
+  (if (null aaron)
+      nil
+      (let ((num_childs (car  aaron))
+            (num_metada (cadr aaron))
+            (left       (cddr aaron))) ; what is left after the header
+        (cond
+
+          ((= num_childs 0)
+           (let ((ret 
+           (subseq left 0 num_metada)))
+             (setf aaron (subseq left num_metada))
+             ret))
+
+          ((> num_childs 0)
+           (cons
+             (wrap_n_noargs #'owen num_childs)
+             (subseq left 0 num_metada)))))))
+
+
+(owen (list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2) )
+(owen (list 1 1 1 1 0 1 88 10 5))
+(owen (list 1 1 0 1 10 5))  
+(owen (list 2 1 0 1 10 0 1 20 5))  
+          
+(list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2)
+;     ^   ^            ^   ^       
+;into
+((10 11 12) ((99) 2) 1 1 2)
+          
+;;;;;;;;;;;;;;
+
+(defun totree (lis) ; expect a list where first ele is a list of metadata and the 2nd ele is a list of what is left for the next call
+  (format t "entering with ~A~%" lis)
+  (if (null (cadr lis))
+      nil
+      (let* ((num_child (car  (cadr lis)))
+            (num_meta  (cadr (cadr lis)))
+            (left      (cddr (cadr lis))))
+        ;(append (list (totree (cdr lis)) (totree (cddr lis))) metadatahere)
+        (let* ((last_call_returned left) ; cddr lis   is the start of the first child
+              (list_of_meta_lists  
+                (loop for x from 1 to num_child 
+                      do
+                      (progn
+                        (format t "calling totree on ~A~%" last_call_returned)
+                        (setf last_call_returned (cddr (totree (list '() last_call_returned)))))
+                      collect 
+                      (car last_call_returned) ; the lists of metadata
+                      )))
+          (format t "list_of_meta_lists is ~A~%" list_of_meta_lists)
+          ;(format t "meta here is ~A~%"  (subseq last_call_returned 0 num_meta))
+
+          (list
+            list_of_meta_lists
+            ;(subseq last_call_returned num_meta) ; jump your own metadata and return what is left for the next call
+            (cadr last_call_returned))
+          ))))
+
+  ; a child is just the full lis that starts with the correct header
+
+(totree (list '() testdata))
+(cddr (cadr (list '() testdata)))
+
+;;;;;;;;;;;;;;;;;;
+
+(loop for x from 1 to 4
       do
-      (progn
-      (format t "x:~A~%" x)))
+      (format t "hi")
+      collect
+      (values
+      (list x)
+      55))
+
+
+
+
+;;;;;;;;;;;;
+
+(setf aaron (list 0 1 100 0 1 200))
+
+(defun owen (lis) ; rets the tree so far
+  (if (null lis)
+      nil
+      (let ((num_childs (car  lis))
+            (num_metada (cadr lis))
+            (left       (cddr lis))) ; what is left after the header
+        (cond
+
+          ((= num_childs 0)
+             (subseq left 0 num_metada))
+
+          ((> num_childs 0)
+           (multiple-value-bind (left treesofar)
+             (owen left)
+             (values
+               (subseq left num_metada) ; skip any metadata
+               (cons treesofar (subseq left 0 num_metada)))))))))
+
+(owen (list 0 1 100 0 1 200))
+;;;;;;;;;;;;
+
+
+
+
+(defun totree (lis)
+  (if (null lis)
+      nil
+      (let ((num_child (car  lis))
+            (num_meta  (cadr lis)))
+        ;(append (list (totree (cdr lis)) (totree (cddr lis))) metadatahere)
+        (let ((last_call_returned (cddr lis))) ; cddr lis   is the start of the first child
+          (loop for x from 1 to num_child 
+                do
+                (progn
+                  (format t "calling totree on ~A~%" last_call_returned)
+                  (setf last_call_returned (totree last_call_returned))))
+          (format t "meta here is ~A~%"  (subseq last_call_returned 0 num_meta))
+          (subseq last_call_returned num_meta)))))
+
+  ; a child is just the full lis that starts with the correct header
+
+(totree testdata)
+
+
+
+;;;;;;;;;;;;;;;
+
+
+(defun night ()
+    (setq aaron (subseq aaron 1)))
+
+
+(night)
+aaron
+(setq bob 9)
+bob
+
+(setf aaron (list 0 1 100 0 1 200))
+; consume the lis as we go?
+(defun mallory () ; if sibs = 0 then go deep   else go deep them call mallory again
+ (if (null lis)
+     nil
+     (let ((num_child (car  lis))
+           (num_meta  (cadr lis))
+           (content   (cddr lis)))
+       
+       (if (= 0 num_child)
+           
+
+(declaim)           
+(declaim (optimize (debug 2)))
+;;;;;;;;;;;;;;;;; 
+
+(totree (list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2))
+(totree (list 0 1 10))
+(totree (list 1 1 0 1 10 100))
+result
+(list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2)
+;     ^   ^            ^   ^       
+;into
+((10 11 12) ((99) 2) 1 1 2)
+
+
+(defun totree (lis)
+  (format t "in totree on ~A~%" lis)
+  (if (null lis)
+      nil
+      (let* ((num_child (car  lis))
+             (num_meta  (cadr lis))
+             (last_call_returned (cddr lis)) ; cddr lis   is the start of the first child
+             (lists_of_sibs
+               (if (> num_child 0)
+                   (loop for x from 1 to num_child 
+                         collect
+                         (let ((lcr last_call_returned))
+                           (progn
+                             (multiple-value-bind (meta remaining_lis)
+                               ; exec
+                               (totree lcr)
+                               ; body
+                               (progn
+                                 (setf lcr remaining_lis)
+                                 (format t "ret here is ~A~%" meta)
+                                 meta)))))
+                   ; else no children -- just metadata
+                   (subseq last_call_returned 0 num_meta))))
+        (format t "lists_of_sibs is ~A~%"  lists_of_sibs)
+        ;(setf result (cons result (list (subseq last_call_returned 0 num_meta))))
+        (values
+          (cons lists_of_sibs (subseq last_call_returned num_meta)) ; might need to ,@ the last arg
+          (subseq last_call_returned 0 num_meta)))))
+
+  ; a child is just the full lis that starts with the correct header
+
+
+(totree (list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2))
+
+;;;;;;;;;
+
+(loop for x from 1 to 5
+      collect
+        (progn
+          (format t "hi")
+          x))
+
+;;;;;;;;;;;;
+
+(defun parse_node (lis) ; just get metadata
+  (let ((metadata_nodes '()))
+    (defun parse_node_ (lis)
+      ; it returns just the remaining metadata
+      (if (null lis)
+          nil
+          ;do we have some children to process?
+          (let* ((num_child_nodes    (car  lis))
+                 (num_metadata_nodes (cadr lis))
+                 (lis_left (wrap_n #'parse_node_ (cddr lis) num_child_nodes)))
+
+            (mapcar #'(lambda (x)
+                        (setf metadata_nodes (append metadata_nodes (list x))))
+                    (subseq lis_left 0 num_metadata_nodes))
+            (subseq lis_left num_metadata_nodes))))
+    (parse_node_ lis)
+    metadata_nodes))
+                  
+
+ ;;;;;;;;;;;;;;;;;;;
+; turn
+(parse_node (list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2))
+;     ^   ^            ^   ^       
+;into
+((10 11 12) ((99) 2) 1 1 2)
+
+;;;;;;;;;;;;;;;;;
+
+
+
+
+
+(append (list 1 2 3) (list 5 6 7))
+(subseq (list 1 2 3 4 5) 1)
+
+
+
+(defun bob (lis) ; return the remaining elements   and  the tree so far
+  (format t "entering with:~A~%" lis)
+  (if (or (null lis)
+          (null (car lis)))
+      nil
+      (let* ((num_child_nodes    (car  lis))
+             (num_metadata_nodes (cadr lis))
+             (remaining (cddr lis)))
+        (if (= num_child_nodes 0)
+            (values
+              (subseq remaining num_metadata_nodes)
+              (subseq remaining 0 num_metadata_nodes))
+            (let ((siblings
+                    (append 
+                      (loop for x from 1 to num_child_nodes
+                            collect
+                            (multiple-value-bind (left tree)
+                              ; exec
+                              (bob remaining)
+                              ; body
+                              (progn
+                                (setf remaining left)
+                                tree)))
+                      (progn
+                        (format t "here:~A~%" (subseq remaining 0 num_metadata_nodes))
+                        (subseq remaining 0 num_metadata_nodes))
+                      ))
+                  (whatremains
+                    (subseq remaining num_metadata_nodes))) ; ahh, i want this to be evaluated after the loop body 
+                                                            ; so i need it down here
+              (values
+                whatremains
+                siblings))))))
+            
+
+
+(bob '(1 1 0 1 99 2 1 1 2))
+into  ((99) 2) 
+(bob '(0 1 99 2 1 1 2))
+; 
+(bob (list 0 1 1))      
+(bob (list 2 1 0 1 100 0 1 200 300))
+(bob (list 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2))
+;into
+((10 11 12) ((99) 2) 1 1 2)

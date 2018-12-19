@@ -1,3 +1,6 @@
+; omg look at all my attempts...
+
+
 (ql:quickload "alexandria")
 (alexandria:iota 3)
 
